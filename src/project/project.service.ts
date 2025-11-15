@@ -139,6 +139,22 @@ export class ProjectService {
       throw new BadRequestException('본인이 개설한 프로젝트에는 신청할 수 없습니다.');
     }
 
+    // 프로젝트 지원 가능 여부 판단
+    const applicationStatus = this.checkProjectApplicability(project);
+    if (!applicationStatus.isOpen) {
+      throw new BadRequestException(applicationStatus.reason);
+    }
+
+    // 직군별 지원 가능 여부 판단
+    for (const position of applyProjectDto.appliedPosition) {
+      const positionAvailable = this.checkPositionAvailability(project, position);
+      if (!positionAvailable) {
+        throw new BadRequestException(
+          `${position} 직군의 지원 인원이 가득 찼습니다.`,
+        );
+      }
+    }
+
     const existingApplication =
       await this.projectRepository.findApplicationByUserAndProject(
         userId,
@@ -320,6 +336,7 @@ export class ProjectService {
       name: project.name,
       description: project.description,
       difficulty: project.difficulty,
+      isOpen: project.isOpen,
       recruitmentStartDate: project.recruitmentStartDate,
       recruitmentEndDate: project.recruitmentEndDate,
       projectStartDate: project.projectStartDate,
@@ -330,6 +347,8 @@ export class ProjectService {
       limitPM: project.limitPM,
       limitMobile: project.limitMobile,
       limitAI: project.limitAI,
+      minProficiency: project.minProficiency,
+      maxProficiency: project.maxProficiency,
       ownerId: project.ownerId,
       owner: project.owner,
       memberCount: project._count?.members,
@@ -360,5 +379,213 @@ export class ProjectService {
         ? this.mapToProjectResponse(application.project)
         : undefined,
     };
+  }
+
+  /**
+   * 프로젝트 지원 가능 여부 판단
+   * 조건:
+   * 1. isOpen이 true
+   * 2. 현재 시간이 모집 기간 내
+   * 3. 프로젝트 시작 전
+   */
+  private checkProjectApplicability(
+    project: any,
+  ): { isOpen: boolean; reason?: string } {
+    const now = new Date();
+
+    // 프로젝트가 닫혀있는 경우
+    if (!project.isOpen) {
+      return { isOpen: false, reason: '마감된 프로젝트입니다.' };
+    }
+
+    // 모집 기간 설정이 되어있는 경우 확인
+    if (project.recruitmentStartDate || project.recruitmentEndDate) {
+      if (project.recruitmentStartDate && now < project.recruitmentStartDate) {
+        return {
+          isOpen: false,
+          reason: `모집이 아직 시작되지 않았습니다. (${project.recruitmentStartDate.toLocaleDateString()})`,
+        };
+      }
+
+      if (project.recruitmentEndDate && now > project.recruitmentEndDate) {
+        return {
+          isOpen: false,
+          reason: `모집 기간이 종료되었습니다. (${project.recruitmentEndDate.toLocaleDateString()})`,
+        };
+      }
+    }
+
+    // 프로젝트가 이미 시작된 경우
+    if (now >= project.projectStartDate) {
+      return { isOpen: false, reason: '프로젝트가 이미 시작되었습니다.' };
+    }
+
+    return { isOpen: true };
+  }
+
+  /**
+   * 특정 직군의 지원 가능 여부 판단
+   * 직군별 모집 인원이 남아있는지 확인
+   */
+  private checkPositionAvailability(project: any, position: string): boolean {
+    const memberCounts = this.countMembersByPosition(project.members || []);
+    const limits: Record<string, number> = {
+      BACKEND: project.limitBE,
+      FRONTEND: project.limitFE,
+      MOBILE: project.limitMobile,
+      AI: project.limitAI,
+      PM: project.limitPM,
+    };
+
+    const limit = limits[position] || 0;
+    const currentCount = memberCounts[position] || 0;
+
+    // limit이 0이면 무제한으로 간주
+    if (limit === 0) {
+      return true;
+    }
+
+    return currentCount < limit;
+  }
+
+  /**
+   * 직군별 멤버 수 집계
+   */
+  private countMembersByPosition(
+    members: any[],
+  ): Record<string, number> {
+    const counts: Record<string, number> = {
+      BACKEND: 0,
+      FRONTEND: 0,
+      MOBILE: 0,
+      AI: 0,
+      PM: 0,
+    };
+
+    for (const member of members) {
+      if (member.role && Array.isArray(member.role)) {
+        for (const role of member.role) {
+          if (counts.hasOwnProperty(role)) {
+            counts[role]++;
+          }
+        }
+      }
+    }
+
+    return counts;
+  }
+
+  /**
+   * 사용자의 Proficiency가 프로젝트 요구사항을 충족하는지 판단
+   * minProficiency <= userProficiency <= maxProficiency
+   */
+  private isProficiencyWithinRange(
+    userProficiency: string,
+    minProficiency: string,
+    maxProficiency: string,
+  ): boolean {
+    const proficiencyOrder = {
+      UNKNOWN: 0,
+      BRONZE: 1,
+      SILVER: 2,
+      GOLD: 3,
+      PLATINUM: 4,
+      DIAMOND: 5,
+    };
+
+    const userLevel = proficiencyOrder[userProficiency as keyof typeof proficiencyOrder] || 0;
+    const minLevel = proficiencyOrder[minProficiency as keyof typeof proficiencyOrder] || 0;
+    const maxLevel = proficiencyOrder[maxProficiency as keyof typeof proficiencyOrder] || 5;
+
+    return userLevel >= minLevel && userLevel <= maxLevel;
+  }
+
+  /**
+   * 프로젝트의 isOpen 상태 업데이트
+   * 자동으로 프로젝트의 지원 가능 상태를 업데이트합니다.
+   */
+  async updateProjectOpenStatus(projectId: string): Promise<void> {
+    const project = await this.projectRepository.findProjectById(projectId);
+
+    if (!project) {
+      throw new NotFoundException('프로젝트를 찾을 수 없습니다.');
+    }
+
+    const { isOpen } = this.checkProjectApplicability(project);
+
+    // isOpen 상태가 변경된 경우에만 업데이트
+    if (project.isOpen !== isOpen) {
+      await this.projectRepository.updateProject(projectId, { isOpen });
+    }
+  }
+
+  /**
+   * 사용자가 프로젝트에 지원 가능한지 종합적으로 판단
+   */
+  async checkUserApplicability(
+    userId: string,
+    projectId: string,
+    appliedPositions: string[],
+    userProficiency: string,
+  ): Promise<{ applicable: boolean; reasons: string[] }> {
+    const reasons: string[] = [];
+
+    // 프로젝트 조회
+    const project = await this.projectRepository.findProjectById(projectId);
+    if (!project) {
+      return { applicable: false, reasons: ['프로젝트를 찾을 수 없습니다.'] };
+    }
+
+    // 본인이 개설한 프로젝트인지 확인
+    if (project.ownerId === userId) {
+      reasons.push('본인이 개설한 프로젝트에는 신청할 수 없습니다.');
+    }
+
+    // 이미 신청했는지 확인
+    const existingApplication =
+      await this.projectRepository.findApplicationByUserAndProject(
+        userId,
+        projectId,
+      );
+    if (existingApplication) {
+      reasons.push('이미 신청한 프로젝트입니다.');
+    }
+
+    // 이미 참여 중인지 확인
+    const existingMember = await this.projectRepository.findProjectMember(
+      userId,
+      projectId,
+    );
+    if (existingMember) {
+      reasons.push('이미 참여 중인 프로젝트입니다.');
+    }
+
+    // 프로젝트 지원 가능 여부 확인
+    const projectStatus = this.checkProjectApplicability(project);
+    if (!projectStatus.isOpen) {
+      reasons.push(projectStatus.reason || '프로젝트는 지원 불가능 상태입니다.');
+    }
+
+    // 직군별 모집 인원 확인
+    for (const position of appliedPositions) {
+      if (!this.checkPositionAvailability(project, position)) {
+        reasons.push(`${position} 직군의 모집이 마감되었습니다.`);
+      }
+    }
+
+    // Proficiency 범위 확인
+    if (
+      !this.isProficiencyWithinRange(
+        userProficiency,
+        project.minProficiency,
+        project.maxProficiency,
+      )
+    ) {
+      reasons.push(
+        `사용자의 능력 등급(${userProficiency})이 프로젝트 요구사항(${project.minProficiency}~${project.maxProficiency})을 충족하지 않습니다.`,
+      );
+    }
+
+    return { applicable: reasons.length === 0, reasons };
   }
 }

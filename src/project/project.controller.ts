@@ -190,5 +190,24 @@ export class ProjectController {
   ): Promise<void> {
     return this.projectService.cancelApplication(req.user.id, projectId);
   }
+
+  @ApiOperation({ summary: 'Check if user can apply to a project' })
+  @ApiResponse({ status: 200 })
+  @ApiParam({ name: 'id', type: 'string', description: 'Project ID' })
+  @ApiBearerAuth()
+  @Post(':id/check-applicability')
+  @UseGuards(AccessTokenGuard)
+  async checkApplicability(
+    @Request() req,
+    @Param('id') projectId: string,
+    @Body() body: { appliedPositions: string[] },
+  ): Promise<{ applicable: boolean; reasons: string[] }> {
+    return this.projectService.checkUserApplicability(
+      req.user.id,
+      projectId,
+      body.appliedPositions,
+      req.user.proficiency,
+    );
+  }
 }
 

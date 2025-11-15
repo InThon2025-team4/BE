@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Difficulty, Position, ApplicationStatus } from '@prisma/client';
+import { Difficulty, Position, ApplicationStatus, Proficiency } from '@prisma/client';
 
 export class ProjectResponseDto {
   @ApiProperty({ description: 'Project ID' })
@@ -13,6 +13,9 @@ export class ProjectResponseDto {
 
   @ApiPropertyOptional({ enum: Difficulty, description: 'Project difficulty level' })
   difficulty?: Difficulty;
+
+  @ApiProperty({ description: 'Project is open for applications' })
+  isOpen: boolean;
 
   @ApiPropertyOptional({ description: 'Recruitment start date' })
   recruitmentStartDate?: Date;
@@ -43,6 +46,12 @@ export class ProjectResponseDto {
 
   @ApiProperty({ description: 'Limit of AI positions' })
   limitAI: number;
+
+  @ApiProperty({ enum: Proficiency, description: 'Minimum proficiency level required' })
+  minProficiency: Proficiency;
+
+  @ApiProperty({ enum: Proficiency, description: 'Maximum proficiency level accepted' })
+  maxProficiency: Proficiency;
 
   @ApiProperty({ description: 'Project owner ID' })
   ownerId: string;
