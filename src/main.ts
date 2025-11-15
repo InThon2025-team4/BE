@@ -11,6 +11,8 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'public'));
 
+  app.enableCors();
+
   const config = new DocumentBuilder()
     .setTitle('Team4 API')
     .setDescription('Team4 API description')
