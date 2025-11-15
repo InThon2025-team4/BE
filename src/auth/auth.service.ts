@@ -1,11 +1,11 @@
 import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserRepository } from '../user/user.repository';
-import FirebaseLoginDto from './dto/firebaselogin.dto';
+import SupabaseLoginDto from './dto/supabaselogin.dto';
 import { AuthTokenResponseDto, OnboardingRequiredDto } from './dto/token-response.dto';
 import { OnboardDto } from './dto/onboard.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import * as admin from 'firebase-admin';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { sign as signJwt } from './libs/jwt'
 import { encrypt, decrypt } from '../libs/crypto';
 
@@ -15,7 +15,7 @@ export class AuthService {
         private readonly configService: ConfigService,
         private readonly userRepository: UserRepository,
         private readonly prismaService: PrismaService,
-        @Inject('FIREBASE_ADMIN') private readonly firebaseApp: admin.app.App,
+        @Inject('SUPABASE_CLIENT') private readonly supabase: SupabaseClient,
     ) {}
 
     private generateJwtToken(uid: string): string {
@@ -23,16 +23,20 @@ export class AuthService {
         return signJwt({ uid }, secret);
     }
 
-    async loginWithFirebaseOrRegister(dto: FirebaseLoginDto): Promise<AuthTokenResponseDto | OnboardingRequiredDto> {
-        const firebaseAccessToken = dto.idToken
+    async loginWithSupabaseOrRegister(dto: SupabaseLoginDto): Promise<AuthTokenResponseDto | OnboardingRequiredDto> {
+        const supabaseAccessToken = dto.accessToken
         try {
-        const decoded = await this.firebaseApp
-            .auth()
-            .verifyIdToken(firebaseAccessToken);
-        const firebaseUid = decoded.uid;
+        // Verify the Supabase access token and get user
+        const { data: { user: supabaseUser }, error: userError } = await this.supabase.auth.getUser(supabaseAccessToken);
+        
+        if (userError || !supabaseUser) {
+            throw new UnauthorizedException('Invalid Supabase access token');
+        }
+        
+        const supabaseUid = supabaseUser.id;
 
         let user = await this.prismaService.user.findUnique({
-            where: { firebaseUid },
+            where: { supabaseUid },
         });
         if (user) {
             const accessToken = this.generateJwtToken(user.id);
@@ -44,10 +48,8 @@ export class AuthService {
             };
             return { accessToken, user: decryptedUser };
         } else {
-            const fbUser = await this.firebaseApp.auth().getUser(firebaseUid);
-
-            const email = fbUser.email;
-            const displayName = fbUser.displayName;
+            const email = supabaseUser.email;
+            const displayName = supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null;
             if (!email)
             throw new UnauthorizedException('이메일이 없는 계정입니다.');
 
@@ -61,34 +63,37 @@ export class AuthService {
             // 신규 유저는 온보딩 필요
             return {
                 requiresOnboarding: true,
-                firebaseUid,
+                supabaseUid,
                 email,
                 displayName
             };
         }
         } catch (error) {
-        console.error('Error in AuthService.firebaseLoginOrRegister:', error);
+        console.error('Error in AuthService.supabaseLoginOrRegister:', error);
         // Preserve original exception type if it's already an HTTP exception
         if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
             throw error;
         }
         throw new BadRequestException(
-            `firebase 로그인/회원가입 실패: ${error.message || '알 수 없는 오류'}`,
+            `Supabase 로그인/회원가입 실패: ${error.message || '알 수 없는 오류'}`,
         );
         }
     }
 
     async completeOnboarding(dto: OnboardDto): Promise<AuthTokenResponseDto> {
         try {
-            // Verify the Firebase token
-            const decoded = await this.firebaseApp
-                .auth()
-                .verifyIdToken(dto.idToken);
-            const firebaseUid = decoded.uid;
+            // Verify the Supabase access token
+            const { data: { user: supabaseUser }, error: userError } = await this.supabase.auth.getUser(dto.accessToken);
+            
+            if (userError || !supabaseUser) {
+                throw new UnauthorizedException('Invalid Supabase access token');
+            }
+            
+            const supabaseUid = supabaseUser.id;
 
             // Check if user already exists
             const existingUser = await this.prismaService.user.findUnique({
-                where: { firebaseUid },
+                where: { supabaseUid },
             });
 
             if (existingUser) {
@@ -117,7 +122,7 @@ export class AuthService {
             // Create new user with full onboarding data
             const user = await this.prismaService.user.create({
                 data: {
-                    firebaseUid,
+                    supabaseUid,
                     authProvider: dto.authProvider,
                     email: dto.email,
                     name: dto.name,

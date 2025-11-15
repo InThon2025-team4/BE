@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
-import { FirebaseModule } from './firebase.module';
+import { SupabaseModule } from './supabase.module';
 import { ProjectModule } from './project/project.module';
 
 @Module({
@@ -13,7 +13,7 @@ import { ProjectModule } from './project/project.module';
     ConfigModule.forRoot({ isGlobal: true }), 
     AuthModule, 
     UserModule,
-    FirebaseModule,
+    SupabaseModule,
     ProjectModule
   ],
   controllers: [AppController],

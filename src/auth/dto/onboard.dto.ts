@@ -3,11 +3,11 @@ import { Position, Proficiency, TechStack } from '@prisma/client';
 import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, Matches, MaxLength } from 'class-validator';
 
 export class OnboardDto {
-  @ApiProperty({ description: 'Firebase ID token received after client-side authentication.' })
+  @ApiProperty({ description: 'Supabase access token received after client-side authentication.' })
   @IsString()
-  idToken!: string;
+  accessToken!: string;
 
-  @ApiProperty({ description: 'Authentication provider stored alongside the Firebase user.' })
+  @ApiProperty({ description: 'Authentication provider stored alongside the Supabase user.' })
   @IsString()
   authProvider!: string;
 

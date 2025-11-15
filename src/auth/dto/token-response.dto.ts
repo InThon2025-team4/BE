@@ -6,7 +6,7 @@ class UserProfileDto {
   id: string;
 
   @ApiProperty()
-  firebaseUid: string;
+  supabaseUid: string;
 
   @ApiProperty()
   authProvider!: string;
@@ -51,8 +51,8 @@ export class OnboardingRequiredDto {
   @ApiProperty({ description: 'Indicates that the user needs to complete onboarding', example: true })
   requiresOnboarding!: boolean;
 
-  @ApiProperty({ description: 'Firebase UID for the user', example: 'firebase_uid_12345' })
-  firebaseUid!: string;
+  @ApiProperty({ description: 'Supabase UID for the user', example: 'supabase_uid_12345' })
+  supabaseUid!: string;
 
   @ApiProperty({ required: false, nullable: true })
   email?: string | null;
