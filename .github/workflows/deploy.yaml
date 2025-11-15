@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: 'clec-be'   # App Service 이름
-  NODE_VERSION: '18.x'           # App Service 런타임과 동일한 버전
+  AZURE_WEBAPP_NAME: 'clec-be'
+  NODE_VERSION: '18.x'           
 
 jobs:
   build:
@@ -26,9 +26,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-      
+        
       - name: Build
-        run: npm run build --if-present # NestJS의 경우 'npm run build'
+        run: npm run build --if-present
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
