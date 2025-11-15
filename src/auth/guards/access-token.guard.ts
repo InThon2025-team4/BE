@@ -36,7 +36,7 @@ export class AccessTokenGuard implements CanActivate {
     }
 
     try {
-      const secret = this.configService.get<string>('jwt.secret');
+      const secret = this.configService.get<string>('JWT_SECRET');
 
       const payload = jwt.verify(token, secret) as { uid: string };
       const user = await this.userRepository.findById(payload.uid);

@@ -1,9 +1,11 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthTokenResponseDto, OnboardingRequiredDto } from './dto/token-response.dto';
 import FirebaseLoginDto from './dto/firebaselogin.dto';
 import { OnboardDto } from './dto/onboard.dto';
+import { AccessTokenGuard } from './guards/access-token.guard';
+import { Request } from 'express';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -23,5 +25,14 @@ export class AuthController {
     @Post('onboard')
     async completeOnboarding(@Body() dto: OnboardDto): Promise<AuthTokenResponseDto> {
         return this.authService.completeOnboarding(dto);
+    }
+
+    @ApiOperation({ summary: 'Get current user profile using Bearer token.' })
+    @ApiResponse({ status: 200, description: 'Returns current user profile with decrypted phone number.' })
+    @ApiBearerAuth()
+    @UseGuards(AccessTokenGuard)
+    @Get('profile')
+    async getProfile(@Req() req: Request & { user: any }) {
+        return req.user;
     }
 }
