@@ -6,3 +6,162 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id              String  @id @default(uuid())
+  firebaseUid     String  @unique
+  authProvider    String
+  email           String  @unique
+  name            String
+  phone           String
+  githubId        String  @unique
+  profileImageUrl String?
+
+  techStacks TechStack[]
+  positions  Position[]
+  proficiency Proficiency @default(UNKNOWN)
+
+  portfolio Json?
+
+  createdProjects Project[] @relation("ProjectOwner")
+
+  projectsAsMember ProjectMember[]
+
+  applications Application[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id          String  @id @default(uuid())
+  name        String
+  description String
+  difficulty  Difficulty?
+
+  recruitmentStartDate DateTime?
+  recruitmentEndDate   DateTime?
+
+  projectStartDate DateTime
+  projectEndDate   DateTime
+
+  githubRepoUrl String?
+
+  limitBE      Int @default(0)
+  limitFE      Int @default(0)
+  limitPM       Int @default(0)
+  limitMobile  Int @default(0)
+  limitAI      Int @default(0)
+
+  ownerId String
+  owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id])
+
+  members ProjectMember[]
+
+  applications Application[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model Application {
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  appliedPosition Position[]
+
+  status ApplicationStatus @default(PENDING)
+
+  coverLetter String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, projectId])
+}
+
+model ProjectMember {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  role Position[]
+
+  joinedAt DateTime @default(now())
+
+  @@unique([userId, projectId])
+  @@index([userId])
+  @@index([projectId])
+}
+
+enum TechStack {
+  // 언어
+  JAVASCRIPT
+  TYPESCRIPT
+  PYTHON
+  JAVA
+  CPP
+  CSHARP
+  GO
+  RUST
+
+  // 프론트엔드
+  REACT
+  VUE
+  ANGULAR
+  SVELTE
+  NEXTJS
+
+  // 백엔드
+  NODEJS
+  NESTJS
+  SPRING
+  DJANGO
+  FLASK
+  FASTAPI
+
+  // 모바일
+  REACT_NATIVE
+  FLUTTER
+  SWIFT
+  KOTLIN
+
+  // AI
+  TENSORFLOW
+  PYTORCH
+}
+
+enum Position {
+  BACKEND
+  FRONTEND
+  MOBILE
+  AI
+}
+
+enum Proficiency {
+  EXPERT
+  INTERMEDIATE
+  BEGINNER
+  UNKNOWN
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
