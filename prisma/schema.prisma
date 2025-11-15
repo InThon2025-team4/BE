@@ -49,7 +49,7 @@ model Project {
 
   limitBE      Int @default(0)
   limitFE      Int @default(0)
-  limitPM       Int @default(0)
+  limitPM      Int @default(0)
   limitMobile  Int @default(0)
   limitAI      Int @default(0)
 
@@ -145,6 +145,7 @@ enum Position {
   FRONTEND
   MOBILE
   AI
+  PM
 }
 
 enum Proficiency {
