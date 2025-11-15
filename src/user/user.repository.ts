@@ -31,9 +31,9 @@ export class UserRepository {
         return this.decryptUserPhone(user);
     }
 
-    async findByFirebaseUid(firebaseUid: string): Promise<User | null> {
+    async findBySupabaseUid(supabaseUid: string): Promise<User | null> {
         const user = await this.prisma.user.findUnique({
-            where: { firebaseUid },
+            where: { supabaseUid },
         });
         return this.decryptUserPhone(user);
     }
