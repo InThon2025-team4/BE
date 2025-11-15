@@ -38,6 +38,7 @@ model Project {
   name        String
   description String
   difficulty  Difficulty?
+  isOpen      Boolean @default(true)
 
   recruitmentStartDate DateTime?
   recruitmentEndDate   DateTime?
@@ -52,6 +53,9 @@ model Project {
   limitPM      Int @default(0)
   limitMobile  Int @default(0)
   limitAI      Int @default(0)
+
+  minProficiency Proficiency @default(UNKNOWN)
+  maxProficiency Proficiency @default(UNKNOWN)
 
   ownerId String
   owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id])
@@ -149,9 +153,11 @@ enum Position {
 }
 
 enum Proficiency {
-  EXPERT
-  INTERMEDIATE
-  BEGINNER
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
   UNKNOWN
 }
 
@@ -159,6 +165,7 @@ enum Difficulty {
   BEGINNER
   INTERMEDIATE
   ADVANCED
+  UNKNOWN
 }
 
 enum ApplicationStatus {
