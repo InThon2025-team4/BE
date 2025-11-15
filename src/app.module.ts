@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { SupabaseModule } from './supabase.module';
 import { ProjectModule } from './project/project.module';
 import { AwsModule } from './aws/aws.module';
+import { GeminiModule } from './gemini/gemini.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AwsModule } from './aws/aws.module';
     SupabaseModule,
     ProjectModule,
     AwsModule,
+    GeminiModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
