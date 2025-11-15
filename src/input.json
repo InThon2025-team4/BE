@@ -1,0 +1,146 @@
+{
+  "User": [
+    {
+      "id": "u-alice",
+      "supabaseUid": "supabase-111",
+      "authProvider": "google",
+      "email": "alice@example.com",
+      "name": "Alice Kim",
+      "phone": "010-1111-2222",
+      "githubId": "alicehub",
+      "profileImageUrl": "https://example.com/alice.png",
+      "techStacks": ["TYPESCRIPT", "NESTJS", "REACT"],
+      "positions": ["BACKEND"],
+      "proficiency": "INTERMEDIATE",
+      "portfolio": {
+        "github": "https://github.com/alicehub",
+        "blog": "https://velog.io/@alice"
+      }
+    },
+    {
+      "id": "u-bob",
+      "supabaseUid": "supabase-222",
+      "authProvider": "github",
+      "email": "bob@example.com",
+      "name": "Bob Lee",
+      "phone": "010-3333-4444",
+      "githubId": "bobgit",
+      "profileImageUrl": "https://example.com/bob.png",
+      "techStacks": ["PYTHON", "DJANGO"],
+      "positions": ["BACKEND"],
+      "proficiency": "BEGINNER",
+      "portfolio": null
+    },
+    {
+      "id": "u-carol",
+      "supabaseUid": "supabase-333",
+      "authProvider": "google",
+      "email": "carol@example.com",
+      "name": "Carol Park",
+      "phone": "010-5555-6666",
+      "githubId": "caroldev",
+      "profileImageUrl": null,
+      "techStacks": ["REACT", "NEXTJS"],
+      "positions": ["FRONTEND"],
+      "proficiency": "EXPERT",
+      "portfolio": {
+        "behance": "https://behance.net/carol"
+      }
+    },
+    {
+      "id": "u-david",
+      "supabaseUid": "supabase-444",
+      "authProvider": "google",
+      "email": "david@example.com",
+      "name": "David Choi",
+      "phone": "010-7777-8888",
+      "githubId": "david-ai",
+      "profileImageUrl": "https://example.com/david.png",
+      "techStacks": ["PYTORCH", "PYTHON"],
+      "positions": ["AI"],
+      "proficiency": "INTERMEDIATE",
+      "portfolio": {
+        "github": "https://github.com/david-ai"
+      }
+    }
+  ],
+  "Project": [
+    {
+      "id": "p-ai-study",
+      "name": "AI 기반 스터디 추천 서비스",
+      "description": "사용자의 기술스택과 활동 내역을 기반으로 스터디를 자동 추천하는 서비스",
+      "difficulty": "INTERMEDIATE",
+      "recruitmentStartDate": "2025-01-10T00:00:00Z",
+      "recruitmentEndDate": "2025-01-20T00:00:00Z",
+      "projectStartDate": "2025-02-01T00:00:00Z",
+      "projectEndDate": "2025-05-01T00:00:00Z",
+      "githubRepoUrl": "https://github.com/team/ai-study-reco",
+      "limitBE": 2,
+      "limitFE": 1,
+      "limitPM": 1,
+      "limitMobile": 0,
+      "limitAI": 2,
+      "ownerId": "u-alice"
+    },
+    {
+      "id": "p-campus-app",
+      "name": "캠퍼스 커뮤니티 앱",
+      "description": "공지/중고거래/스터디 매칭 등을 제공하는 모바일 중심 커뮤니티 앱",
+      "difficulty": "BEGINNER",
+      "recruitmentStartDate": "2025-03-01T00:00:00Z",
+      "recruitmentEndDate": "2025-03-15T00:00:00Z",
+      "projectStartDate": "2025-03-20T00:00:00Z",
+      "projectEndDate": "2025-06-01T00:00:00Z",
+      "githubRepoUrl": null,
+      "limitBE": 1,
+      "limitFE": 1,
+      "limitPM": 1,
+      "limitMobile": 2,
+      "limitAI": 0,
+      "ownerId": "u-carol"
+    }
+  ],
+  "ProjectMember": [
+    {
+      "id": "m1",
+      "userId": "u-alice",
+      "projectId": "p-ai-study",
+      "role": ["BACKEND"]
+    },
+    {
+      "id": "m2",
+      "userId": "u-david",
+      "projectId": "p-ai-study",
+      "role": ["AI"]
+    },
+    {
+      "id": "m3",
+      "userId": "u-carol",
+      "projectId": "p-campus-app",
+      "role": ["FRONTEND"]
+    }
+  ],
+  "Application": [
+    {
+      "userId": "u-bob",
+      "projectId": "p-ai-study",
+      "appliedPosition": ["BACKEND"],
+      "status": "PENDING",
+      "coverLetter": "AI 추천 시스템 백엔드에 관심이 있습니다. Django 경험이 있으며 협업에 자신 있습니다."
+    },
+    {
+      "userId": "u-david",
+      "projectId": "p-campus-app",
+      "appliedPosition": ["AI"],
+      "status": "REJECTED",
+      "coverLetter": "커뮤니티 앱의 AI 추천 기능 개발에 기여하고 싶습니다."
+    },
+    {
+      "userId": "u-alice",
+      "projectId": "p-campus-app",
+      "appliedPosition": ["BACKEND"],
+      "status": "ACCEPTED",
+      "coverLetter": "NestJS 기반 백엔드 개발이 가능하며 안정적인 API 서버 구축 경험이 있습니다."
+    }
+  ]
+}
