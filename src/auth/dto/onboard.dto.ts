@@ -23,10 +23,10 @@ export class OnboardDto {
   @IsEnum(Position, { each: true })
   positions?: Position[];
 
-  @ApiPropertyOptional({ enum: Proficiency, default: Proficiency.UNKNOWN })
+  @ApiPropertyOptional({ enum: Proficiency, default: 'UNKNOWN' })
   @IsOptional()
   @IsEnum(Proficiency)
-  proficiency?: Proficiency;
+  proficiency?: Proficiency = Proficiency.UNKNOWN;
 
   @ApiProperty({ description: 'Display name that will be persisted on the user profile.' })
   @IsString()

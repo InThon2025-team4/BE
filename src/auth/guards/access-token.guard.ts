@@ -19,16 +19,18 @@ export class AccessTokenGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const authHeader = request.headers['authorization'];
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('No token provided');
+      throw new UnauthorizedException('Authorization header missing or invalid format');
     }
+    
     const token = authHeader.split(' ')[1];
 
     if (token.startsWith('uid:') && process.env.NODE_ENV === 'local') {
       const uid = token.split(':')[1];
       const user = await this.userRepository.findById(uid);
       if (!user) {
-        throw new UnauthorizedException('User not found');
+        throw new UnauthorizedException('User not found with provided UID');
       }
 
       request.user = user;
@@ -37,16 +39,26 @@ export class AccessTokenGuard implements CanActivate {
 
     try {
       const secret = this.configService.get<string>('JWT_SECRET');
+      
+      if (!secret) {
+        throw new Error('JWT_SECRET is not configured');
+      }
 
       const payload = jwt.verify(token, secret) as { uid: string };
       const user = await this.userRepository.findById(payload.uid);
+      
       if (!user) {
-        throw new UnauthorizedException('User not found');
+        throw new UnauthorizedException(`User not found for uid: ${payload.uid}`);
       }
+      
       request.user = user;
       return true;
     } catch (err) {
-      throw new UnauthorizedException('Invalid or expired token');
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      console.error('Token verification error:', err);
+      throw new UnauthorizedException(`Token verification failed: ${err.message}`);
     }
   }
 }

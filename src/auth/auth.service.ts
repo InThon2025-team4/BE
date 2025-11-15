@@ -26,45 +26,50 @@ export class AuthService {
     async loginWithSupabaseOrRegister(dto: SupabaseLoginDto): Promise<AuthTokenResponseDto | OnboardingRequiredDto> {
         const supabaseAccessToken = dto.accessToken
         try {
-        // Verify the Supabase access token and get user
-        const { data: { user: supabaseUser }, error: userError } = await this.supabase.auth.getUser(supabaseAccessToken);
-        
-        if (userError || !supabaseUser) {
-            throw new UnauthorizedException('Invalid Supabase access token');
-        }
-        
-        const supabaseUid = supabaseUser.id;
+            // Verify the Supabase access token and get user
+            const { data: { user: supabaseUser }, error: userError } = await this.supabase.auth.getUser(supabaseAccessToken);
+            
+            if (userError || !supabaseUser) {
+                console.error('Supabase verification error:', userError);
+                throw new UnauthorizedException(`Invalid Supabase access token: ${userError?.message || 'Unknown error'}`);
+            }
+            
+            const supabaseUid = supabaseUser.id;
+            console.log('Verified Supabase user:', supabaseUid);
 
-        let user = await this.prismaService.user.findUnique({
-            where: { supabaseUid },
-        });
-        if (user) {
-            const accessToken = this.generateJwtToken(user.id);
-            // Decrypt phone number before returning
-            const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
-            const decryptedUser = {
-                ...user,
-                phone: user.phone ? decrypt(user.phone, encryptionKey) : user.phone,
-            };
-            return { accessToken, user: decryptedUser };
-        } else {
-            const email = supabaseUser.email;
-            const displayName = supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null;
-            if (!email)
-            throw new UnauthorizedException('이메일이 없는 계정입니다.');
-
-            // Email이 중복되었을수도 있으므로 있는지 체크.
-            const existingUser = await this.prismaService.user.findUnique({
-            where: { email },
+            let user = await this.prismaService.user.findUnique({
+                where: { supabaseUid },
             });
-            if (existingUser)
-            throw new UnauthorizedException('이미 가입된 이메일입니다.');
+            if (user) {
+                console.log('Existing user found:', user.id);
+                const accessToken = this.generateJwtToken(user.id);
+                // Decrypt phone number before returning
+                const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+                const decryptedUser = {
+                    ...user,
+                    phone: user.phone ? decrypt(user.phone, encryptionKey) : user.phone,
+                };
+                return { accessToken, user: decryptedUser };
+            } else {
+                const email = supabaseUser.email;
+                const displayName = supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null;
+                console.log('New user requires onboarding:', { email, supabaseUid });
+                
+                if (!email)
+                throw new UnauthorizedException('이메일이 없는 계정입니다.');
 
-            // 신규 유저는 온보딩 필요
-            return {
-                requiresOnboarding: true,
-                supabaseUid,
-                email,
+                // Email이 중복되었을수도 있으므로 있는지 체크.
+                const existingUser = await this.prismaService.user.findUnique({
+                where: { email },
+                });
+                if (existingUser)
+                throw new UnauthorizedException('이미 가입된 이메일입니다.');
+
+                // 신규 유저는 온보딩 필요
+                return {
+                    requiresOnboarding: true,
+                    supabaseUid,
+                    email,
                 displayName
             };
         }
@@ -131,7 +136,7 @@ export class AuthService {
                     profileImageUrl: dto.profileImageUrl,
                     techStacks: dto.techStacks || [],
                     positions: dto.positions || [],
-                    proficiency: dto.proficiency || 'UNKNOWN',
+                    proficiency: dto.proficiency ?? 'UNKNOWN',
                     portfolio: dto.portfolio ?? null,
                 },
             });
