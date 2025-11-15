@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 및 온보딩</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-login {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-login:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-reset {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-reset:hover {
+            background: #d0d0d0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .token-display {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .token-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>로그인 및 온보딩</h1>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('login')">로그인</button>
+            <button class="tab-btn" onclick="switchTab('onboard')">온보딩</button>
+        </div>
+
+        <!-- 로그인 탭 -->
+        <div id="login" class="tab-content active">
+            <div id="loginAlert" class="alert"></div>
+            
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginEmail">이메일</label>
+                    <input type="email" id="loginEmail" placeholder="example@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">비밀번호</label>
+                    <input type="password" id="loginPassword" placeholder="비밀번호 입력" required>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-login">로그인</button>
+                    <button type="reset" class="btn-reset">초기화</button>
+                </div>
+            </form>
+
+            <div id="loginLoading" class="loading">
+                <div class="spinner"></div>
+                <p>로그인 중...</p>
+            </div>
+
+            <div id="loginToken" class="hidden">
+                <div class="token-display">
+                    <div class="token-label">액세스 토큰:</div>
+                    <div id="accessTokenValue"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 온보딩 탭 -->
+        <div id="onboard" class="tab-content">
+            <div id="onboardAlert" class="alert"></div>
+
+            <form onsubmit="handleOnboard(event)">
+                <div class="form-group">
+                    <label for="onboardAccessToken">Supabase 액세스 토큰 *</label>
+                    <input id="onboardAccessToken" placeholder="로그인으로부터 받은 토큰" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="onboardAuthProvider">인증 제공자 *</label>
+                    <input type="text" id="onboardAuthProvider" placeholder="예: supabase" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="onboardName">이름 *</label>
+                    <input type="text" id="onboardName" placeholder="홍길동" maxlength="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="onboardEmail">이메일 *</label>
+                    <input type="email" id="onboardEmail" placeholder="example@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="onboardPhone">휴대폰 번호 * (010-XXXX-XXXX)</label>
+                    <input type="text" id="onboardPhone" placeholder="010-1234-5678" pattern="^010-\d{4}-\d{4}$" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="onboardGithubId">GitHub ID *</label>
+                    <input type="text" id="onboardGithubId" placeholder="github_username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="onboardProfileImage">프로필 이미지 URL</label>
+                    <input type="url" id="onboardProfileImage" placeholder="https://example.com/image.jpg">
+                </div>
+
+                <div class="form-group">
+                    <label>기술 스택</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="tech-TYPESCRIPT" value="TYPESCRIPT">
+                            <label for="tech-TYPESCRIPT">TypeScript</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="tech-PYTHON" value="PYTHON">
+                            <label for="tech-PYTHON">Python</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="tech-JAVA" value="JAVA">
+                            <label for="tech-JAVA">Java</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="tech-REACT" value="REACT">
+                            <label for="tech-REACT">React</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="tech-NODEJS" value="NODEJS">
+                            <label for="tech-NODEJS">Node.js</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>포지션</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="pos-FRONTEND" value="FRONTEND">
+                            <label for="pos-FRONTEND">Frontend</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="pos-BACKEND" value="BACKEND">
+                            <label for="pos-BACKEND">Backend</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="pos-FULLSTACK" value="FULLSTACK">
+                            <label for="pos-FULLSTACK">Fullstack</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="onboardProficiency">숙련도</label>
+                    <select id="onboardProficiency">
+                        <option value="UNKNOWN" selected>선택 안함</option>
+                        <option value="BEGINNER">Beginner</option>
+                        <option value="INTERMEDIATE">Intermediate</option>
+                        <option value="EXPERT">Expert</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="onboardPortfolio">포트폴리오 (JSON)</label>
+                    <textarea id="onboardPortfolio" placeholder='{"url": "https://example.com"}' rows="3"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-login">온보딩 완료</button>
+                    <button type="reset" class="btn-reset">초기화</button>
+                </div>
+            </form>
+
+            <div id="onboardLoading" class="loading">
+                <div class="spinner"></div>
+                <p>온보딩 진행 중...</p>
+            </div>
+
+            <div id="onboardToken" class="hidden">
+                <div class="token-display">
+                    <div class="token-label">액세스 토큰:</div>
+                    <div id="onboardAccessTokenValue"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ============================================
+        // 🔧 환경 설정 (하드코딩)
+        // ============================================
+        const SUPABASE_URL = "https://vjgvhulizhcacgtkpwxx.supabase.co"
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqZ3ZodWxpemhjYWNndGtwd3h4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxODcxNzEsImV4cCI6MjA3ODc2MzE3MX0.X4OxEFqangb75kKDeK4YsQVBElkY-vZdoG200KWiN_g";
+        const API_BASE_URL = "http://localhost:4000";
+        
+        // ============================================
+        
+        let supabaseClient = null;
+        let supabaseAccessToken = null;
+
+        function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(
+                    SUPABASE_URL,
+                    SUPABASE_ANON_KEY
+                );
+                console.log('Supabase 초기화 완료');
+            } catch (error) {
+                console.error('Supabase 초기화 실패:', error);
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showAlert(elementId, message, type) {
+            const alertEl = document.getElementById(elementId);
+            alertEl.textContent = message;
+            alertEl.className = `alert ${type}`;
+        }
+
+        function hideLoading(elementId) {
+            document.getElementById(elementId).classList.remove('show');
+        }
+
+        function showLoading(elementId) {
+            document.getElementById(elementId).classList.add('show');
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            showLoading('loginLoading');
+            showAlert('loginAlert', '', '');
+
+            try {
+                if (!supabaseClient) {
+                    throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+                }
+
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                supabaseAccessToken = data.session.access_token;
+
+                const response = await fetch(`${API_BASE_URL}/auth/supabase`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        accessToken: supabaseAccessToken
+                    })
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(responseData.message || '로그인 실패');
+                }
+
+                if (responseData.requiresOnboarding) {
+                    showAlert('loginAlert', '온보딩이 필요합니다. 온보딩 탭에서 정보를 입력해주세요.', 'info');
+                    document.getElementById('onboardAccessToken').value = supabaseAccessToken;
+                    document.getElementById('onboardAuthProvider').value = 'supabase';
+                    document.getElementById('onboardEmail').value = responseData.email;
+                    if (responseData.displayName) {
+                        document.getElementById('onboardName').value = responseData.displayName;
+                    }
+                } else {
+                    showAlert('loginAlert', '로그인 성공!', 'success');
+                    document.getElementById('accessTokenValue').textContent = responseData.accessToken;
+                    document.getElementById('loginToken').classList.remove('hidden');
+                }
+            } catch (error) {
+                showAlert('loginAlert', `오류: ${error.message}`, 'error');
+            } finally {
+                hideLoading('loginLoading');
+            }
+        }
+
+        async function handleOnboard(event) {
+            event.preventDefault();
+
+            const techStacks = Array.from(document.querySelectorAll('input[id^="tech-"]:checked'))
+                .map(el => el.value);
+            const positions = Array.from(document.querySelectorAll('input[id^="pos-"]:checked'))
+                .map(el => el.value);
+            
+            let portfolio = null;
+            try {
+                const portfolioText = document.getElementById('onboardPortfolio').value;
+                if (portfolioText) {
+                    portfolio = JSON.parse(portfolioText);
+                }
+            } catch (e) {
+                showAlert('onboardAlert', '포트폴리오 JSON 형식이 잘못되었습니다.', 'error');
+                return;
+            }
+
+            const onboardData = {
+                accessToken: document.getElementById('onboardAccessToken').value,
+                authProvider: document.getElementById('onboardAuthProvider').value,
+                name: document.getElementById('onboardName').value,
+                email: document.getElementById('onboardEmail').value,
+                phone: document.getElementById('onboardPhone').value,
+                githubId: document.getElementById('onboardGithubId').value,
+                profileImageUrl: document.getElementById('onboardProfileImage').value || undefined,
+                techStacks: techStacks.length > 0 ? techStacks : undefined,
+                positions: positions.length > 0 ? positions : undefined,
+                proficiency: document.getElementById('onboardProficiency').value,
+                portfolio: portfolio
+            };
+
+            showLoading('onboardLoading');
+            showAlert('onboardAlert', '', '');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/onboard`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(onboardData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || '온보딩 실패');
+                }
+
+                showAlert('onboardAlert', '온보딩이 완료되었습니다!', 'success');
+                document.getElementById('onboardAccessTokenValue').textContent = data.accessToken;
+                document.getElementById('onboardToken').classList.remove('hidden');
+            } catch (error) {
+                showAlert('onboardAlert', `오류: ${error.message}`, 'error');
+            } finally {
+                hideLoading('onboardLoading');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initSupabase);
+    </script>
+</body>
+</html>
