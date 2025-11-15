@@ -11,7 +11,7 @@
       "profileImageUrl": "https://example.com/alice.png",
       "techStacks": ["TYPESCRIPT", "NESTJS", "REACT"],
       "positions": ["BACKEND"],
-      "proficiency": "INTERMEDIATE",
+      "proficiency": "GOLD",
       "portfolio": {
         "github": "https://github.com/alicehub",
         "blog": "https://velog.io/@alice"
@@ -28,7 +28,7 @@
       "profileImageUrl": "https://example.com/bob.png",
       "techStacks": ["PYTHON", "DJANGO"],
       "positions": ["BACKEND"],
-      "proficiency": "BEGINNER",
+      "proficiency": "BRONZE",
       "portfolio": null
     },
     {
@@ -42,7 +42,7 @@
       "profileImageUrl": null,
       "techStacks": ["REACT", "NEXTJS"],
       "positions": ["FRONTEND"],
-      "proficiency": "EXPERT",
+      "proficiency": "PLATINUM",
       "portfolio": {
         "behance": "https://behance.net/carol"
       }
@@ -58,7 +58,7 @@
       "profileImageUrl": "https://example.com/david.png",
       "techStacks": ["PYTORCH", "PYTHON"],
       "positions": ["AI"],
-      "proficiency": "INTERMEDIATE",
+      "proficiency": "SILVER",
       "portfolio": {
         "github": "https://github.com/david-ai"
       }
@@ -70,6 +70,8 @@
       "name": "AI 기반 스터디 추천 서비스",
       "description": "사용자의 기술스택과 활동 내역을 기반으로 스터디를 자동 추천하는 서비스",
       "difficulty": "INTERMEDIATE",
+      "minProficiency": "BRONZE",
+      "maxProficiency": "PLATINUM",
       "recruitmentStartDate": "2025-01-10T00:00:00Z",
       "recruitmentEndDate": "2025-01-20T00:00:00Z",
       "projectStartDate": "2025-02-01T00:00:00Z",
@@ -87,11 +89,13 @@
       "name": "캠퍼스 커뮤니티 앱",
       "description": "공지/중고거래/스터디 매칭 등을 제공하는 모바일 중심 커뮤니티 앱",
       "difficulty": "BEGINNER",
+      "minProficiency": "BRONZE",
+      "maxProficiency": "GOLD",
       "recruitmentStartDate": "2025-03-01T00:00:00Z",
       "recruitmentEndDate": "2025-03-15T00:00:00Z",
       "projectStartDate": "2025-03-20T00:00:00Z",
       "projectEndDate": "2025-06-01T00:00:00Z",
-      "githubRepoUrl": null,
+      "githubRepoUrl": "https://github.com/team/campus-app",
       "limitBE": 1,
       "limitFE": 1,
       "limitPM": 1,
@@ -136,7 +140,7 @@
       "coverLetter": "커뮤니티 앱의 AI 추천 기능 개발에 기여하고 싶습니다."
     },
     {
-      "userId": "u-alice",
+      "userId": "u-carol",
       "projectId": "p-campus-app",
       "appliedPosition": ["BACKEND"],
       "status": "ACCEPTED",
