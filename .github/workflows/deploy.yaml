@@ -39,7 +39,6 @@ jobs:
             node_modules
             package.json
             package-lock.json
-            # NestJS 실행에 필요한 파일들
 
   deploy:
     runs-on: ubuntu-latest
@@ -54,5 +53,5 @@ jobs:
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: team4
           publish-profile: ${{ secrets.AZURE_APPSERVICE_PUBLISH_PROFILE }}
