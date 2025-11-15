@@ -33,7 +33,7 @@ jobs:
         with:
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/InThon2025-team4/BE:latest
+          tags: ghcr.io/inthon2025-team4/be:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
