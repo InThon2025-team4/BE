@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+prisma/.env
+.git
+.github
+.vscode
+npm-debug.log
+Dockerfile*
+src/**/Dockerfile
+coverage
+*.log
+/.temp
+/.tmp
