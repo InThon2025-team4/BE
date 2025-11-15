@@ -14,6 +14,8 @@ import {
   ProjectResponseDto,
   ProjectDetailResponseDto,
   ApplicationResponseDto,
+  OwnerDashboardResponseDto,
+  MemberDashboardResponseDto,
   DashboardResponseDto,
 } from './dto/project-response.dto';
 import { ApplicationStatus } from '@prisma/client';
@@ -21,8 +23,6 @@ import { ApplicationStatus } from '@prisma/client';
 @Injectable()
 export class ProjectService {
   constructor(private readonly projectRepository: ProjectRepository) {}
-
-  // ========== Project CRUD ==========
 
   async createProject(
     userId: string,
@@ -123,8 +123,6 @@ export class ProjectService {
 
     await this.projectRepository.deleteProject(projectId);
   }
-
-  // ========== Application Management ==========
 
   async applyToProject(
     userId: string,
@@ -270,8 +268,6 @@ export class ProjectService {
     await this.projectRepository.deleteApplication(userId, projectId);
   }
 
-  // ========== Dashboard ==========
-
   async getDashboard(userId: string): Promise<DashboardResponseDto> {
     const [ownedProjects, memberProjects, applications] = await Promise.all([
       this.projectRepository.findProjectsByOwnerId(userId),
@@ -292,17 +288,31 @@ export class ProjectService {
     };
   }
 
-  async getMyOwnedProjects(userId: string): Promise<ProjectDetailResponseDto[]> {
-    const projects = await this.projectRepository.findProjectsByOwnerId(userId);
-    return projects.map((project) => this.mapToProjectDetailResponse(project));
+  async getOwnerDashboard(userId: string): Promise<OwnerDashboardResponseDto> {
+    const ownedProjects = await this.projectRepository.findProjectsByOwnerId(userId);
+
+    return {
+      ownedProjects: ownedProjects.map((project) =>
+        this.mapToProjectDetailResponse(project),
+      ),
+    };
   }
 
-  async getMyProjects(userId: string): Promise<ProjectResponseDto[]> {
-    const projects = await this.projectRepository.findProjectsByMemberId(userId);
-    return projects.map((project) => this.mapToProjectResponse(project));
-  }
+  async getMemberDashboard(userId: string): Promise<MemberDashboardResponseDto> {
+    const [memberProjects, applications] = await Promise.all([
+      this.projectRepository.findProjectsByMemberId(userId),
+      this.projectRepository.findApplicationsByUserId(userId),
+    ]);
 
-  // ========== Helper Methods ==========
+    return {
+      myProjects: memberProjects.map((project) =>
+        this.mapToProjectResponse(project),
+      ),
+      myApplications: applications.map((application) =>
+        this.mapToApplicationResponse(application),
+      ),
+    };
+  }
 
   private mapToProjectResponse(project: any): ProjectResponseDto {
     return {

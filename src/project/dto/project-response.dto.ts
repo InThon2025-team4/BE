@@ -69,8 +69,17 @@ export class ApplicationResponseDto {
   project?: ProjectResponseDto;
 }
 
-export class DashboardResponseDto {
+export class OwnerDashboardResponseDto {
+  ownedProjects: ProjectDetailResponseDto[];
+}
+
+export class MemberDashboardResponseDto {
   myProjects: ProjectResponseDto[];
   myApplications: ApplicationResponseDto[];
+}
+
+export class DashboardResponseDto {
   ownedProjects: ProjectDetailResponseDto[];
+  myProjects: ProjectResponseDto[];
+  myApplications: ApplicationResponseDto[];
 }

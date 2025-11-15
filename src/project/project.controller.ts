@@ -20,6 +20,8 @@ import {
   ProjectResponseDto,
   ProjectDetailResponseDto,
   ApplicationResponseDto,
+  OwnerDashboardResponseDto,
+  MemberDashboardResponseDto,
   DashboardResponseDto,
 } from './dto/project-response.dto';
 
@@ -27,27 +29,23 @@ import {
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  // ========== Dashboard ==========
-
   @Get('dashboard')
   @UseGuards(AccessTokenGuard)
   async getDashboard(@Request() req): Promise<DashboardResponseDto> {
     return this.projectService.getDashboard(req.user.id);
   }
 
-  @Get('my/owned')
+  @Get('dashboard/owner')
   @UseGuards(AccessTokenGuard)
-  async getMyOwnedProjects(@Request() req): Promise<ProjectDetailResponseDto[]> {
-    return this.projectService.getMyOwnedProjects(req.user.id);
+  async getOwnerDashboard(@Request() req): Promise<OwnerDashboardResponseDto> {
+    return this.projectService.getOwnerDashboard(req.user.id);
   }
 
-  @Get('my/member')
+  @Get('dashboard/member')
   @UseGuards(AccessTokenGuard)
-  async getMyProjects(@Request() req): Promise<ProjectResponseDto[]> {
-    return this.projectService.getMyProjects(req.user.id);
+  async getMemberDashboard(@Request() req): Promise<MemberDashboardResponseDto> {
+    return this.projectService.getMemberDashboard(req.user.id);
   }
-
-  // ========== Project CRUD ==========
 
   @Post()
   @UseGuards(AccessTokenGuard)
@@ -89,8 +87,6 @@ export class ProjectController {
   async deleteProject(@Request() req, @Param('id') id: string): Promise<void> {
     return this.projectService.deleteProject(req.user.id, id);
   }
-
-  // ========== Application Management ==========
 
   @Post(':id/apply')
   @UseGuards(AccessTokenGuard)

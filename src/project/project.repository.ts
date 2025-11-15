@@ -5,8 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class ProjectRepository {
   constructor(private readonly prisma: PrismaService) {}
-
-  // ========== Project CRUD ==========
   
   async createProject(data: Prisma.ProjectCreateInput): Promise<Project> {
     return this.prisma.project.create({ data });
@@ -153,8 +151,6 @@ export class ProjectRepository {
     });
   }
 
-  // ========== Application Management ==========
-
   async createApplication(
     data: Prisma.ApplicationCreateInput,
   ): Promise<Application> {
@@ -266,8 +262,6 @@ export class ProjectRepository {
       },
     });
   }
-
-  // ========== Project Member Management ==========
 
   async addProjectMember(
     data: Prisma.ProjectMemberCreateInput,
