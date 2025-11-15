@@ -6,6 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { ProjectRepository } from './project.repository';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ApplyProjectDto } from './dto/apply-project.dto';
@@ -22,13 +23,16 @@ import { ApplicationStatus } from '@prisma/client';
 
 @Injectable()
 export class ProjectService {
-  constructor(private readonly projectRepository: ProjectRepository) {}
+  constructor(
+    private readonly projectRepository: ProjectRepository,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async createProject(
     userId: string,
     createProjectDto: CreateProjectDto,
   ): Promise<ProjectResponseDto> {
-    const project = await this.projectRepository.createProject({
+    const projectData: any = {
       ...createProjectDto,
       projectStartDate: new Date(createProjectDto.projectStartDate),
       projectEndDate: new Date(createProjectDto.projectEndDate),
@@ -41,7 +45,13 @@ export class ProjectService {
       owner: {
         connect: { id: userId },
       },
-    });
+    };
+
+    // isOpen 초기값 설정
+    const { isOpen } = this.checkProjectApplicability(projectData);
+    projectData.isOpen = isOpen;
+
+    const project = await this.projectRepository.createProject(projectData);
 
     return this.mapToProjectResponse(project);
   }
@@ -101,6 +111,14 @@ export class ProjectService {
         updateProjectDto.recruitmentEndDate,
       );
     }
+
+    // 업데이트될 프로젝트 정보를 기반으로 isOpen 상태 재계산
+    const projectForValidation = {
+      ...project,
+      ...updateData,
+    };
+    const { isOpen } = this.checkProjectApplicability(projectForValidation);
+    updateData.isOpen = isOpen;
 
     const updatedProject = await this.projectRepository.updateProject(
       projectId,
@@ -330,8 +348,19 @@ export class ProjectService {
     };
   }
 
-  private mapToProjectResponse(project: any): ProjectResponseDto {
-    return {
+  /**
+   * 프로젝트를 응답 DTO로 변환
+   * 선택적으로 사용자 포지션 정보를 받아 사용자별 지원 가능 여부를 계산
+   */
+  private mapToProjectResponse(
+    project: any,
+    userPositions?: string[],
+  ): ProjectResponseDto {
+    const isOpenForUser =
+      userPositions &&
+      this.isProjectOpenForUser(project, userPositions);
+
+    const dto: ProjectResponseDto = {
       id: project.id,
       name: project.name,
       description: project.description,
@@ -356,6 +385,12 @@ export class ProjectService {
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     };
+
+    if (isOpenForUser !== undefined) {
+      dto.isOpenForUser = isOpenForUser;
+    }
+
+    return dto;
   }
 
   private mapToProjectDetailResponse(project: any): ProjectDetailResponseDto {
@@ -384,19 +419,15 @@ export class ProjectService {
   /**
    * 프로젝트 지원 가능 여부 판단
    * 조건:
-   * 1. isOpen이 true
-   * 2. 현재 시간이 모집 기간 내
-   * 3. 프로젝트 시작 전
+   * 1. 현재 시간이 모집 기간 내
+   * 2. 프로젝트 시작 전
+   * 
+   * 반환값의 isOpen은 데이터베이스에 저장할 값
    */
   private checkProjectApplicability(
     project: any,
   ): { isOpen: boolean; reason?: string } {
     const now = new Date();
-
-    // 프로젝트가 닫혀있는 경우
-    if (!project.isOpen) {
-      return { isOpen: false, reason: '마감된 프로젝트입니다.' };
-    }
 
     // 모집 기간 설정이 되어있는 경우 확인
     if (project.recruitmentStartDate || project.recruitmentEndDate) {
@@ -501,10 +532,89 @@ export class ProjectService {
   }
 
   /**
-   * 프로젝트의 isOpen 상태 업데이트
-   * 자동으로 프로젝트의 지원 가능 상태를 업데이트합니다.
+   * 사용자가 프로젝트에 지원 가능한지 판단
+   * 조건:
+   * 1. 기본 isOpen 조건 만족 (모집 기간 내, 프로젝트 시작 전)
+   * 2. 사용자의 포지션 중 프로젝트에서 모집 중인 포지션이 있는지 확인
+   *    - 사용자의 포지션별로 해당 포지션의 limit이 현재 멤버 수를 초과하는지 확인
    */
-  async updateProjectOpenStatus(projectId: string): Promise<void> {
+  private isProjectOpenForUser(
+    project: any,
+    userPositions: string[],
+  ): boolean {
+    // 기본 isOpen 조건 확인
+    if (!project.isOpen) {
+      return false;
+    }
+
+    // 사용자의 포지션이 비어있으면 false
+    if (!userPositions || userPositions.length === 0) {
+      return false;
+    }
+
+    // 멤버 수를 포지션별로 계산
+    const memberCounts = this.countMembersByPosition(project.members || []);
+
+    // 사용자의 포지션 중 하나라도 모집 가능한 포지션이 있는지 확인
+    for (const position of userPositions) {
+      const limit = this.getPositionLimit(project, position);
+      const currentCount = memberCounts[position] || 0;
+
+      // limit이 0이면 무제한 모집 (모집 중)
+      // limit > 0이고 currentCount < limit이면 모집 중
+      if (limit === 0 || currentCount < limit) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Position에 해당하는 limit 값 반환
+   */
+  private getPositionLimit(project: any, position: string): number {
+    const limitMap: Record<string, number> = {
+      BACKEND: project.limitBE,
+      FRONTEND: project.limitFE,
+      MOBILE: project.limitMobile,
+      AI: project.limitAI,
+      PM: project.limitPM,
+    };
+
+    return limitMap[position] || 0;
+  }
+
+  /**
+   * 사용자별로 isOpenForUser가 포함된 프로젝트 목록 반환
+   */
+  async getAllProjectsWithUserContext(
+    userId?: string,
+    skip?: number,
+    take?: number,
+  ): Promise<ProjectResponseDto[]> {
+    const projects = await this.projectRepository.findAllProjects({
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 사용자 정보 조회 (사용자가 있을 경우)
+    let userPositions: string[] | undefined;
+    if (userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { positions: true },
+      });
+      userPositions = user?.positions;
+    }
+
+    return projects.map((project) =>
+      this.mapToProjectResponse(project, userPositions),
+    );
+  }
+
+  /**
     const project = await this.projectRepository.findProjectById(projectId);
 
     if (!project) {

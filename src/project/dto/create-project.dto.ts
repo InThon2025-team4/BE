@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional, IsDateString, IsInt, Min, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Difficulty } from '@prisma/client';
+import { Difficulty, Proficiency } from '@prisma/client';
 
 export class CreateProjectDto {
   @ApiProperty({ description: 'Project name', example: 'Team4 Project' })
@@ -72,4 +72,22 @@ export class CreateProjectDto {
   @Min(0)
   @IsOptional()
   limitAI?: number;
+
+  @ApiPropertyOptional({
+    enum: Proficiency,
+    description: 'Minimum proficiency level required',
+    example: 'BRONZE',
+  })
+  @IsEnum(Proficiency)
+  @IsOptional()
+  minProficiency?: Proficiency;
+
+  @ApiPropertyOptional({
+    enum: Proficiency,
+    description: 'Maximum proficiency level accepted',
+    example: 'PLATINUM',
+  })
+  @IsEnum(Proficiency)
+  @IsOptional()
+  maxProficiency?: Proficiency;
 }

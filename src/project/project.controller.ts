@@ -74,12 +74,16 @@ export class ProjectController {
   @ApiResponse({ status: 200, type: [ProjectResponseDto] })
   @ApiQuery({ name: 'skip', type: 'number', required: false })
   @ApiQuery({ name: 'take', type: 'number', required: false })
+  @ApiBearerAuth()
   @Get()
   async getAllProjects(
     @Query('skip') skip?: string,
     @Query('take') take?: string,
+    @Request() req?: any,
   ): Promise<ProjectResponseDto[]> {
-    return this.projectService.getAllProjects(
+    const userId = req?.user?.id;
+    return this.projectService.getAllProjectsWithUserContext(
+      userId,
       skip ? parseInt(skip) : undefined,
       take ? parseInt(take) : undefined,
     );

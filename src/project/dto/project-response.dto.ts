@@ -14,8 +14,14 @@ export class ProjectResponseDto {
   @ApiPropertyOptional({ enum: Difficulty, description: 'Project difficulty level' })
   difficulty?: Difficulty;
 
-  @ApiProperty({ description: 'Project is open for applications' })
+  @ApiProperty({ description: 'Project is open for applications (based on time constraints)' })
   isOpen: boolean;
+
+  @ApiPropertyOptional({ description: 'Is this project open for the current user (based on tech stack matching)' })
+  isOpenForUser?: boolean;
+
+  @ApiPropertyOptional({ description: 'Reason why project is not open for user' })
+  userBlockReason?: string;
 
   @ApiPropertyOptional({ description: 'Recruitment start date' })
   recruitmentStartDate?: Date;
