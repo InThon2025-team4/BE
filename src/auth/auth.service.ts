@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, UnauthorizedException } from '
 import { ConfigService } from '@nestjs/config';
 import { UserRepository } from '../user/user.repository';
 import SupabaseLoginDto from './dto/supabaselogin.dto';
-import { AuthTokenResponseDto, OnboardingRequiredDto } from './dto/token-response.dto';
+import { LoginResponseDto, OnboardingRequiredDto, OnboardingResponseDto } from './dto/token-response.dto';
 import { OnboardDto } from './dto/onboard.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -23,7 +23,17 @@ export class AuthService {
         return signJwt({ uid }, secret);
     }
 
-    async loginWithSupabaseOrRegister(dto: SupabaseLoginDto): Promise<AuthTokenResponseDto | OnboardingRequiredDto> {
+    private decryptPhoneOrFallback(phone: string | null, encryptionKey: string): string | null {
+        if (!phone) return phone;
+        try {
+            return decrypt(phone, encryptionKey);
+        } catch (error) {
+            console.warn('Failed to decrypt phone; returning stored value as-is.');
+            return phone;
+        }
+    }
+
+    async loginWithSupabaseOrRegister(dto: SupabaseLoginDto): Promise<LoginResponseDto | OnboardingRequiredDto> {
         const supabaseAccessToken = dto.accessToken
         try {
             // Verify the Supabase access token and get user
@@ -47,7 +57,7 @@ export class AuthService {
                 const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
                 const decryptedUser = {
                     ...user,
-                    phone: user.phone ? decrypt(user.phone, encryptionKey) : user.phone,
+                    phone: this.decryptPhoneOrFallback(user.phone, encryptionKey),
                 };
                 return { accessToken, user: decryptedUser };
             } else {
@@ -70,7 +80,8 @@ export class AuthService {
                     requiresOnboarding: true,
                     supabaseUid,
                     email,
-                displayName
+                    displayName,
+                    supabaseAccessToken: supabaseAccessToken,
             };
         }
         } catch (error) {
@@ -85,7 +96,7 @@ export class AuthService {
         }
     }
 
-    async completeOnboarding(dto: OnboardDto): Promise<AuthTokenResponseDto> {
+    async completeOnboarding(dto: OnboardDto): Promise<OnboardingResponseDto> {
         try {
             // Verify the Supabase access token
             const { data: { user: supabaseUser }, error: userError } = await this.supabase.auth.getUser(dto.accessToken);
@@ -145,7 +156,7 @@ export class AuthService {
             // Decrypt phone number before returning
             const decryptedUser = {
                 ...user,
-                phone: decrypt(user.phone, encryptionKey),
+                phone: this.decryptPhoneOrFallback(user.phone, encryptionKey),
             };
             return { accessToken, user: decryptedUser };
         } catch (error) {

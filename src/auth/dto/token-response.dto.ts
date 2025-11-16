@@ -39,7 +39,15 @@ class UserProfileDto {
   portfolio?: unknown;
 }
 
-export class AuthTokenResponseDto {
+export class LoginResponseDto {
+  @ApiProperty()
+  accessToken!: string;
+
+  @ApiProperty({ type: () => UserProfileDto })
+  user!: UserProfileDto;
+}
+
+export class OnboardingResponseDto {
   @ApiProperty()
   accessToken!: string;
 
@@ -59,4 +67,7 @@ export class OnboardingRequiredDto {
 
   @ApiProperty({ required: false, nullable: true })
   displayName?: string | null;
+
+  @ApiProperty({ description: 'Supabase access token to use for onboarding endpoint' })
+  supabaseAccessToken!: string;
 }
