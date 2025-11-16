@@ -17,11 +17,21 @@ export class UserRepository {
     private decryptUserPhone(user: User | null): User | null {
         if (!user || !user.phone) return user;
         
-        const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
-        return {
-            ...user,
-            phone: decrypt(user.phone, encryptionKey),
-        };
+        try {
+            const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+            if (!encryptionKey) {
+                console.warn('ENCRYPTION_KEY not configured, returning encrypted phone');
+                return user;
+            }
+            return {
+                ...user,
+                phone: decrypt(user.phone, encryptionKey),
+            };
+        } catch (error) {
+            console.warn('Failed to decrypt phone number:', error.message);
+            console.warn('Returning user with encrypted phone');
+            return user;
+        }
     }
 
     async findById(uid: string): Promise<User | null> {

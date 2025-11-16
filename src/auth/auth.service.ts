@@ -6,7 +6,7 @@ import { LoginResponseDto, OnboardingRequiredDto, OnboardingResponseDto } from '
 import { OnboardDto } from './dto/onboard.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { sign as signJwt } from './libs/jwt'
+import { sign as jwtSign } from 'jsonwebtoken';
 import { encrypt, decrypt } from '../libs/crypto';
 
 @Injectable()
@@ -19,8 +19,32 @@ export class AuthService {
     ) {}
 
     private generateJwtToken(uid: string): string {
-        const secret = this.configService.get<string>('JWT_SECRET');
-        return signJwt({ uid }, secret);
+        try {
+            const secret = this.configService.get<string>('JWT_SECRET');
+            if (!secret) {
+                console.error('JWT_SECRET environment variable is not set');
+                throw new BadRequestException('JWT_SECRET is not configured in environment variables');
+            }
+            console.log('JWT_SECRET for token generation:', secret.substring(0, 20) + '... (length: ' + secret.length + ')');
+            console.log('Generating JWT token for user:', uid);
+            const token = jwtSign({ uid }, secret, { expiresIn: '24h' });
+            console.log('JWT token generated successfully:', token.substring(0, 50) + '...');
+            return token;
+        } catch (error) {
+            console.error('Error generating JWT token:', error);
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+            throw new BadRequestException(`JWT 토큰 생성 실패: ${error.message || '알 수 없는 오류'}`);
+        }
+    }
+
+    private getEncryptionKey(): string {
+        const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+        if (!encryptionKey) {
+            throw new BadRequestException('ENCRYPTION_KEY is not configured in environment variables');
+        }
+        return encryptionKey;
     }
 
     private decryptPhoneOrFallback(phone: string | null, encryptionKey: string): string | null {
@@ -54,7 +78,7 @@ export class AuthService {
                 console.log('Existing user found:', user.id);
                 const accessToken = this.generateJwtToken(user.id);
                 // Decrypt phone number before returning
-                const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+                const encryptionKey = this.getEncryptionKey();
                 const decryptedUser = {
                     ...user,
                     phone: this.decryptPhoneOrFallback(user.phone, encryptionKey),
@@ -132,7 +156,7 @@ export class AuthService {
             }
 
             // Encrypt phone number before storing
-            const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+            const encryptionKey = this.getEncryptionKey();
             const encryptedPhone = encrypt(dto.phone, encryptionKey);
 
             // Create new user with full onboarding data
