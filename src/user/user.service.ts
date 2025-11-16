@@ -3,6 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../aws/s3.service';
 import { ProfileImageUploadDto } from './dto/profile-image-upload.dto';
 import { ProfileImageResponseDto } from './dto/profile-image-response.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserProfileDto } from '../auth/dto/token-response.dto';
 
 @Injectable()
 export class UserService {
@@ -90,5 +92,61 @@ export class UserService {
     }
 
     return { profileImageUrl: user.profileImageUrl };
+  }
+
+  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserProfileDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('사용자를 찾을 수 없습니다');
+    }
+
+    const dataToUpdate: any = {};
+
+    if (updateProfileDto.name !== undefined) {
+      dataToUpdate.name = updateProfileDto.name;
+    }
+
+    if (updateProfileDto.techStacks !== undefined) {
+      dataToUpdate.techStacks = updateProfileDto.techStacks;
+    }
+
+    if (updateProfileDto.positions !== undefined) {
+      dataToUpdate.positions = updateProfileDto.positions;
+    }
+
+    if (updateProfileDto.proficiency !== undefined) {
+      dataToUpdate.proficiency = updateProfileDto.proficiency;
+    }
+
+    if (updateProfileDto.portfolio !== undefined) {
+      dataToUpdate.portfolio = updateProfileDto.portfolio;
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: dataToUpdate,
+    });
+
+    return this.mapToUserProfileDto(updatedUser);
+  }
+
+  private mapToUserProfileDto(user: any): UserProfileDto {
+    return {
+      id: user.id,
+      supabaseUid: user.supabaseUid,
+      authProvider: user.authProvider,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      githubId: user.githubId,
+      profileImageUrl: user.profileImageUrl,
+      techStacks: user.techStacks,
+      positions: user.positions,
+      proficiency: user.proficiency,
+      portfolio: user.portfolio,
+    };
   }
 }

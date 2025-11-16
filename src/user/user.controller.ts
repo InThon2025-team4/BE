@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Body,
   UseGuards,
   Param,
@@ -11,8 +12,10 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiResponse, ApiParam } 
 import { UserService } from './user.service';
 import { ProfileImageUploadDto } from './dto/profile-image-upload.dto';
 import { ProfileImageResponseDto } from './dto/profile-image-response.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { User } from './decorators/user.decorator';
+import { UserProfileDto } from '../auth/dto/token-response.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -161,5 +164,58 @@ export class UserController {
     @Param('id') userId: string,
   ): Promise<{ profileImageUrl: string | null }> {
     return this.userService.getProfileImageUrl(userId);
+  }
+
+  @Put(':id')
+  @UseGuards(AccessTokenGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '사용자 프로필 정보 업데이트',
+    description:
+      '사용자의 프로필 정보를 업데이트합니다. 모든 필드는 선택사항이며, 포함된 필드만 업데이트됩니다. ' +
+      'phone 필드는 서버에서 AES-256-CBC로 암호화되어 저장됩니다.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '사용자 ID (자신의 ID와 일치해야 함)',
+    example: '550e8400-e29b-41d4-a716-446655440000'
+  })
+  @ApiBody({
+    type: UpdateProfileDto,
+    description: '업데이트할 프로필 정보 (모든 필드 Optional)'
+  })
+  @ApiResponse({
+    status: 200,
+    type: UserProfileDto,
+    description: '업데이트된 사용자 프로필 정보'
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 요청 (예: 자신의 프로필이 아님, 유효하지 않은 전화번호 형식)'
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증되지 않음 (Bearer 토큰 필수)'
+  })
+  @ApiResponse({
+    status: 404,
+    description: '사용자를 찾을 수 없음'
+  })
+  async updateProfile(
+    @Param('id') userId: string,
+    @Body() updateProfileDto: UpdateProfileDto,
+    @User() user: { id: string },
+  ): Promise<UserProfileDto> {
+    // 사용자 인증 확인
+    if (!user || !user.id) {
+      throw new BadRequestException('사용자 인증이 필요합니다');
+    }
+
+    // 자신의 프로필만 수정 가능
+    if (userId !== user.id) {
+      throw new BadRequestException('자신의 프로필만 수정할 수 있습니다');
+    }
+
+    return this.userService.updateProfile(userId, updateProfileDto);
   }
 }

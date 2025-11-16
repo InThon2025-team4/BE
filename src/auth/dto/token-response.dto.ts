@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Position, Proficiency, TechStack } from '@prisma/client';
 
-class UserProfileDto {
+export class UserProfileDto {
   @ApiProperty({
     description: '사용자 고유 ID (UUID)',
     example: '550e8400-e29b-41d4-a716-446655440000'
