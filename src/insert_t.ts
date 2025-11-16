@@ -91,31 +91,38 @@ async function main() {
 
   const projectsData = [
     {
-      key: PROJECT_DEVCONNECT,
-      data: {
-        name: "개발자 매칭 플랫폼 'DevConnect'", description: "NestJS와 Next.js를 이용한 사이드 프로젝트 매칭 서비스입니다.",
-        difficulty: Difficulty.INTERMEDIATE, isOpen: true,
-        recruitmentStartDate: new Date("2025-11-10T00:00:00Z"), recruitmentEndDate: new Date("2025-11-30T00:00:00Z"),
-        projectStartDate: new Date("2025-12-01T00:00:00Z"), projectEndDate: new Date("2026-02-28T00:00:00Z"),
-        githubRepoUrl: "https://github.com/chulsoo-kim/devconnect",
-        limitBE: 2, limitFE: 2, limitPM: 1, limitMobile: 0, limitAI: 0,
-        minProficiency: Proficiency.SILVER, maxProficiency: Proficiency.GOLD,
-        ownerId: idMap.users[USER_OWNER], // User 1 (김철수) ID 연결
-      }
-    },
-    {
-      key: PROJECT_DIARY,
-      data: {
-        name: "Flutter 감성 다이어리 앱", description: "Flutter와 Firebase를 이용한 모바일 다이어리 앱 프로젝트입니다.",
-        difficulty: Difficulty.BEGINNER, isOpen: true,
-        recruitmentStartDate: new Date("2025-11-15T00:00:00Z"), recruitmentEndDate: new Date("2025-12-15T00:00:00Z"),
-        projectStartDate: new Date("2025-12-20T00:00:00Z"), projectEndDate: new Date("2026-03-31T00:00:00Z"),
-        githubRepoUrl: null,
-        limitBE: 1, limitFE: 0, limitPM: 0, limitMobile: 2, limitAI: 0,
-        minProficiency: Proficiency.BRONZE, maxProficiency: Proficiency.UNKNOWN,
-        ownerId: idMap.users[USER_MEMBER], // User 2 (이영희) ID 연결
-      }
-    }
+  key: PROJECT_WRITEWISE,
+  data: {
+    name: "AI 기반 필사 연습 서비스 'WriteWise'",
+    description: "AI가 문장 교정과 필사 난이도를 자동 추천해주는 웹 기반 필사 연습 플랫폼입니다.",
+    difficulty: Difficulty.INTERMEDIATE, isOpen: true,
+    recruitmentStartDate: new Date("2025-11-12T00:00:00Z"),
+    recruitmentEndDate: new Date("2025-12-05T00:00:00Z"),
+    projectStartDate: new Date("2025-12-10T00:00:00Z"),
+    projectEndDate: new Date("2026-03-15T00:00:00Z"),
+    githubRepoUrl: "https://github.com/jiyun-park/writewise",
+    limitBE: 2, limitFE: 2, limitPM: 1, limitMobile: 0, limitAI: 1,
+    minProficiency: Proficiency.SILVER, maxProficiency: Proficiency.GOLD,
+    ownerId: idMap.users[USER_AI_CREATOR], // User 3 (박지윤) 같은 역할
+  }
+},
+{
+0key: PROJECT_FITBUDDY,
+  data: {
+    name: "React Native 헬스케어 앱 'FitBuddy'",
+    description: "개인의 운동 데이터를 기반으로 맞춤 트레이닝 루틴을 제공하는 헬스케어 모바일 앱입니다.",
+    difficulty: Difficulty.ADVANCED, isOpen: true,
+    recruitmentStartDate: new Date("2025-11-20T00:00:00Z"),
+    recruitmentEndDate: new Date("2025-12-25T00:00:00Z"),
+    projectStartDate: new Date("2025-12-30T00:00:00Z"),
+    projectEndDate: new Date("2026-04-30T00:00:00Z"),
+    githubRepoUrl: "https://github.com/health-lab/fitbuddy",
+    limitBE: 2, limitFE: 1, limitPM: 1, limitMobile: 2, limitAI: 1,
+    minProficiency: Proficiency.GOLD, maxProficiency: Proficiency.PLATINUM,
+    ownerId: idMap.users[USER_MOBILE_LEAD], // User 4 (모바일 리드 같은 역할)
+  }
+}
+
   ];
 
   for (const { key, data } of projectsData) {
@@ -148,21 +155,22 @@ async function main() {
   await prisma.application.createMany({
     data: [
       {
-        // 박대기(User 3) -> DevConnect (Pending)
-        userId: idMap.users[USER_PENDING],
-        projectId: idMap.projects[PROJECT_DEVCONNECT],
-        appliedPosition: ['BACKEND', 'AI'] as any,
-        status: ApplicationStatus.PENDING,
-        coverLetter: "안녕하세요, 박대기입니다. 백엔드 및 AI 포지션에 지원합니다."
+        // 이합격(User 5) -> Flutter Diary Project (Accepted)
+        userId: idMap.users[USER_ACCEPTED],
+        projectId: idMap.projects[PROJECT_DIARY],
+        appliedPosition: ['MOBILE'] as any,
+        status: ApplicationStatus.ACCEPTED,
+        coverLetter: "안녕하세요, 이합격입니다. 2년간 Flutter로 앱을 개발해왔고 Diary 앱 프로젝트에 기여하고 싶습니다."
       },
       {
-        // 최거절(User 4) -> DevConnect (Rejected)
-        userId: idMap.users[USER_REJECTED],
-        projectId: idMap.projects[PROJECT_DEVCONNECT],
-        appliedPosition: ['BACKEND'] as any,
-        status: ApplicationStatus.REJECTED,
-        coverLetter: "10년차 스프링 개발자입니다. 백엔드 지원합니다."
-      }
+        // 김검토(User 6) -> WriteWise AI 필사 서비스 (Pending)
+        userId: idMap.users[USER_REVIEW],
+        projectId: idMap.projects[PROJECT_WRITEWISE],
+        appliedPosition: ['FRONTEND'] as any,
+        status: ApplicationStatus.PENDING,
+        coverLetter:"안녕하세요, 김검토입니다. Next.js 기반 프론트엔드 경험이 있으며 WriteWise 서비스 UI/UX에 관심이 많습니다."
+    }
+
     ]
   });
   console.log(`> 2개의 지원서 생성 완료.`);
