@@ -12,25 +12,55 @@ import { Request } from 'express';
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
-    @ApiOperation({ summary: 'Authenticate user via Supabase access token and issue JWT' })
-    @ApiResponse({ status: 200, type: LoginResponseDto, description: 'User already exists, returns JWT token' })
-    @ApiResponse({ status: 200, type: OnboardingRequiredDto, description: 'New user, requires onboarding' })
-    @ApiBody({ type: SupabaseLoginDto })
+    @ApiOperation({
+        summary: 'Supabase 액세스 토큰으로 로그인 또는 가입',
+        description: '클라이언트에서 Supabase 인증을 통해 받은 액세스 토큰으로 서버에 로그인합니다. 기존 사용자면 JWT 토큰을 발급하고, 신규 사용자면 Onboarding이 필요함을 알립니다.'
+    })
+    @ApiResponse({
+        status: 200,
+        type: LoginResponseDto,
+        description: '기존 사용자 - JWT 액세스 토큰과 사용자 프로필 반환'
+    })
+    @ApiResponse({
+        status: 200,
+        type: OnboardingRequiredDto,
+        description: '신규 사용자 - Onboarding 필수, Supabase 액세스 토큰 반환'
+    })
+    @ApiBody({
+        type: SupabaseLoginDto,
+        description: 'Supabase 액세스 토큰 포함 요청본'
+    })
     @Post('supabase')
     async loginWithSupabase(@Body() dto: SupabaseLoginDto): Promise<LoginResponseDto | OnboardingRequiredDto> {
         return this.authService.loginWithSupabaseOrRegister(dto);
     }
 
-    @ApiOperation({ summary: 'Complete user onboarding and create user account with full details' })
-    @ApiResponse({ status: 201, type: OnboardingResponseDto, description: 'Onboarding completed successfully' })
-    @ApiBody({ type: OnboardDto })
+    @ApiOperation({
+        summary: '신규 사용자 Onboarding 완료',
+        description: '신규 사용자가 필요한 추가 정보(이름, 전화번호, 직무 등)를 입력하여 계정 생성을 완료합니다.'
+    })
+    @ApiResponse({
+        status: 201,
+        type: OnboardingResponseDto,
+        description: 'Onboarding 완료 - JWT 액세스 토큰과 생성된 사용자 프로필 반환'
+    })
+    @ApiBody({
+        type: OnboardDto,
+        description: '사용자 프로필 정보 (name, email, phone 필수, 나머지는 Optional)'
+    })
     @Post('onboard')
     async completeOnboarding(@Body() dto: OnboardDto): Promise<OnboardingResponseDto> {
         return this.authService.completeOnboarding(dto);
     }
 
-    @ApiOperation({ summary: 'Get current user profile using Bearer token' })
-    @ApiResponse({ status: 200, description: 'Returns current user profile with decrypted phone number' })
+    @ApiOperation({
+        summary: '현재 사용자 프로필 조회',
+        description: 'Bearer 토큰으로 인증된 사용자의 프로필 정보를 조회합니다. 전화번호는 자동으로 복호화됩니다.'
+    })
+    @ApiResponse({
+        status: 200,
+        description: '사용자 프로필 정보 반환 (전화번호 포함, 암호화 해제됨)'
+    })
     @ApiBearerAuth()
     @UseGuards(AccessTokenGuard)
     @Get('profile')

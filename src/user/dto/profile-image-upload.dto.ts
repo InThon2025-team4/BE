@@ -3,16 +3,17 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ProfileImageUploadDto {
   @ApiProperty({
-    example: 'profile-pic.jpg',
-    description: '업로드할 파일명',
+    description: '(Required) 업로드할 파일명 (확장자 포함)',
+    example: 'profile-pic.jpg'
   })
   @IsString()
   @IsNotEmpty({ message: '파일명이 필요합니다' })
   fileName: string;
 
   @ApiProperty({
+    description: '(Required) 파일의 MIME 타입 (지원: image/jpeg, image/png, image/gif, image/webp)',
     example: 'image/jpeg',
-    description: 'MIME 타입 (image/jpeg, image/png, image/gif, image/webp)',
+    enum: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
   })
   @IsString()
   @IsNotEmpty({ message: '파일 타입이 필요합니다' })
