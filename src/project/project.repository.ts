@@ -74,6 +74,7 @@ export class ProjectRepository {
             name: true,
             email: true,
             profileImageUrl: true,
+            proficiency: true
           },
         },
         members: {
@@ -104,6 +105,7 @@ export class ProjectRepository {
             name: true,
             email: true,
             profileImageUrl: true,
+            proficiency: true
           },
         },
         members: {
@@ -203,6 +205,7 @@ export class ProjectRepository {
                 name: true,
                 email: true,
                 profileImageUrl: true,
+                proficiency: true
               },
             },
             _count: {
@@ -307,6 +310,7 @@ export class ProjectRepository {
             name: true,
             email: true,
             profileImageUrl: true,
+            proficiency: true
           },
         },
         _count: {
