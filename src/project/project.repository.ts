@@ -76,6 +76,14 @@ export class ProjectRepository {
             profileImageUrl: true,
           },
         },
+        members: {
+          select: {
+            id: true,
+            role: true,
+            userId: true,
+            joinedAt: true,
+          },
+        },
         _count: {
           select: {
             members: true,

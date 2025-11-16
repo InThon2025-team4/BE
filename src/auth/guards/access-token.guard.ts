@@ -26,10 +26,12 @@ export class AccessTokenGuard implements CanActivate {
       throw new UnauthorizedException('Authorization header missing');
     }
     
-    // Extract token from "Bearer <token>" format
-    let token = authHeader;
-    if (authHeader.startsWith('Bearer ')) {
-      token = authHeader.slice(7);
+    // Extract token from "Bearer <token>" format, handling double Bearer case
+    let token = authHeader.trim();
+    
+    // Remove all leading "Bearer " prefixes (handles "Bearer Bearer eyJ...")
+    while (token.startsWith('Bearer ')) {
+      token = token.slice(7).trim();
     }
     
     console.log('Extracted token:', token.substring(0, 50) + '...'); // Log first 50 chars
