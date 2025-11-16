@@ -10,7 +10,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiQuery, ApiParam, ApiBody } from '@nestjs/swagger';
 import { ProjectService } from './project.service';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -61,6 +61,10 @@ export class ProjectController {
   @ApiOperation({ summary: 'Create a new project' })
   @ApiResponse({ status: 201, type: ProjectResponseDto })
   @ApiBearerAuth()
+  @ApiBody({
+    type: CreateProjectDto,
+    description: '프로젝트 생성 정보 (name, description, projectStartDate, projectEndDate 필수, 나머지는 Optional)'
+  })
   @Post()
   @UseGuards(AccessTokenGuard)
   async createProject(
@@ -72,8 +76,8 @@ export class ProjectController {
 
   @ApiOperation({ summary: 'Get all projects with pagination' })
   @ApiResponse({ status: 200, type: [ProjectResponseDto] })
-  @ApiQuery({ name: 'skip', type: 'number', required: false })
-  @ApiQuery({ name: 'take', type: 'number', required: false })
+  @ApiQuery({ name: 'skip', type: 'number', required: false, description: '(Optional) 스킵할 프로젝트 수' })
+  @ApiQuery({ name: 'take', type: 'number', required: false, description: '(Optional) 가져올 프로젝트 수' })
   @ApiBearerAuth()
   @Get()
   async getAllProjects(
@@ -101,6 +105,10 @@ export class ProjectController {
   @ApiResponse({ status: 200, type: ProjectResponseDto })
   @ApiParam({ name: 'id', type: 'string', description: 'Project ID' })
   @ApiBearerAuth()
+  @ApiBody({
+    type: UpdateProjectDto,
+    description: '업데이트할 프로젝트 정보 (모든 필드 Optional - 포함된 필드만 업데이트됨)'
+  })
   @Put(':id')
   @UseGuards(AccessTokenGuard)
   async updateProject(
@@ -125,6 +133,10 @@ export class ProjectController {
   @ApiResponse({ status: 201, type: ApplicationResponseDto })
   @ApiParam({ name: 'id', type: 'string', description: 'Project ID' })
   @ApiBearerAuth()
+  @ApiBody({
+    type: ApplyProjectDto,
+    description: '지원할 포지션 및 자기소개 (appliedPosition 필수, coverLetter는 Optional)'
+  })
   @Post(':id/apply')
   @UseGuards(AccessTokenGuard)
   async applyToProject(
@@ -166,6 +178,10 @@ export class ProjectController {
   @ApiParam({ name: 'id', type: 'string', description: 'Project ID' })
   @ApiParam({ name: 'userId', type: 'string', description: 'Applicant User ID' })
   @ApiBearerAuth()
+  @ApiBody({
+    type: UpdateApplicationDto,
+    description: '업데이트할 지원 상태 (status 필수 - PENDING, ACCEPTED, REJECTED)'
+  })
   @Put(':id/applications/:userId')
   @UseGuards(AccessTokenGuard)
   async updateApplicationStatus(
