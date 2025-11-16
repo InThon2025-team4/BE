@@ -360,6 +360,10 @@ export class ProjectService {
       userPositions &&
       this.isProjectOpenForUser(project, userPositions);
 
+    // 포지션별 현재 인원수 계산
+    const { currentBE, currentFE, currentPM, currentMobile, currentAI } =
+      this.calculateCurrentMembersByPosition(project);
+
     const dto: ProjectResponseDto = {
       id: project.id,
       name: project.name,
@@ -376,6 +380,11 @@ export class ProjectService {
       limitPM: project.limitPM,
       limitMobile: project.limitMobile,
       limitAI: project.limitAI,
+      currentBE,
+      currentFE,
+      currentPM,
+      currentMobile,
+      currentAI,
       minProficiency: project.minProficiency,
       maxProficiency: project.maxProficiency,
       ownerId: project.ownerId,
@@ -414,6 +423,56 @@ export class ProjectService {
         ? this.mapToProjectResponse(application.project)
         : undefined,
     };
+  }
+
+  /**
+   * 포지션별 현재 멤버 수 계산
+   */
+  private calculateCurrentMembersByPosition(project: any): {
+    currentBE: number;
+    currentFE: number;
+    currentPM: number;
+    currentMobile: number;
+    currentAI: number;
+  } {
+    const counts = {
+      currentBE: 0,
+      currentFE: 0,
+      currentPM: 0,
+      currentMobile: 0,
+      currentAI: 0,
+    };
+
+    if (!project.members || project.members.length === 0) {
+      return counts;
+    }
+
+    // 각 멤버의 역할(role)을 확인하여 포지션별 인원 카운트
+    for (const member of project.members) {
+      if (member.role && Array.isArray(member.role)) {
+        for (const role of member.role) {
+          switch (role) {
+            case 'BACKEND':
+              counts.currentBE++;
+              break;
+            case 'FRONTEND':
+              counts.currentFE++;
+              break;
+            case 'PM':
+              counts.currentPM++;
+              break;
+            case 'MOBILE':
+              counts.currentMobile++;
+              break;
+            case 'AI':
+              counts.currentAI++;
+              break;
+          }
+        }
+      }
+    }
+
+    return counts;
   }
 
   /**

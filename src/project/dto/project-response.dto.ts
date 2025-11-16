@@ -53,6 +53,21 @@ export class ProjectResponseDto {
   @ApiProperty({ description: 'Limit of AI positions' })
   limitAI: number;
 
+  @ApiProperty({ description: 'Current number of Backend members' })
+  currentBE: number;
+
+  @ApiProperty({ description: 'Current number of Frontend members' })
+  currentFE: number;
+
+  @ApiProperty({ description: 'Current number of PM members' })
+  currentPM: number;
+
+  @ApiProperty({ description: 'Current number of Mobile members' })
+  currentMobile: number;
+
+  @ApiProperty({ description: 'Current number of AI members' })
+  currentAI: number;
+
   @ApiProperty({ enum: Proficiency, description: 'Minimum proficiency level required' })
   minProficiency: Proficiency;
 
